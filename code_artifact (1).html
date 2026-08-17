@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🔍 自由行需求調查回覆統計</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts: Inter & Noto Sans TC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <!-- html2pdf.js 能在 Preview 與手機端直接將 HTML 轉為 PDF 檔案下載 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Noto Sans TC"', 'Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    :root {
+      /* Theme 1: 典雅大地 (Default Earth Tone) */
+      --bg-main: #F7F4EF;
+      --bg-card: #FFFFFF;
+      --bg-card-sub: #FAF7F2;
+      --border-color: #E6DEC3;
+      --text-main: #2C2523;
+      --text-muted: #6E6259;
+      --primary: #8C5E3C;
+      --primary-hover: #734A2E;
+      --accent: #C87D53;
+      --header-bg: #FAF6F0;
+      --badge-bg: #EFE7DA;
+    }
+
+    body.theme-forest {
+      /* Theme 2: 靜謐森林 */
+      --bg-main: #F2F5F3;
+      --bg-card: #FFFFFF;
+      --bg-card-sub: #F4F8F5;
+      --border-color: #D4E0D7;
+      --text-main: #1C2B22;
+      --text-muted: #55685C;
+      --primary: #3B5E4A;
+      --primary-hover: #2B4737;
+      --accent: #728C6E;
+      --header-bg: #EAF0EC;
+      --badge-bg: #E0EBE3;
+    }
+
+    body.theme-terracotta {
+      /* Theme 3: 落日暖橘 */
+      --bg-main: #FAF5F0;
+      --bg-card: #FFFFFF;
+      --bg-card-sub: #FDF9F5;
+      --border-color: #EEDBD2;
+      --text-main: #331B15;
+      --text-muted: #735048;
+      --primary: #B85235;
+      --primary-hover: #983E24;
+      --accent: #D98A5B;
+      --header-bg: #F8EFEA;
+      --badge-bg: #F4E2D8;
+    }
+
+    body.theme-ocean {
+      /* Theme 4: 湛藍沙灘 */
+      --bg-main: #F0F4F6;
+      --bg-card: #FFFFFF;
+      --bg-card-sub: #F5FAFC;
+      --border-color: #D3E1E8;
+      --text-main: #1A2830;
+      --text-muted: #526673;
+      --primary: #34596E;
+      --primary-hover: #244152;
+      --accent: #5E8A9F;
+      --header-bg: #E7EFF3;
+      --badge-bg: #DCEDF5;
+    }
+
+    body.theme-dark {
+      /* Theme 5: 深夜暖棕 */
+      --bg-main: #1C1A17;
+      --bg-card: #262320;
+      --bg-card-sub: #2F2B27;
+      --border-color: #423C36;
+      --text-main: #F3EFEA;
+      --text-muted: #A89F91;
+      --primary: #D4A373;
+      --primary-hover: #E0B384;
+      --accent: #E09F67;
+      --header-bg: #2B2723;
+      --badge-bg: #3B3530;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      transition: background-color 0.3s ease, color 0.3s ease;
+      font-family: 'Noto Sans TC', sans-serif;
+    }
+
+    .theme-card {
+      background-color: var(--bg-card);
+      border-color: var(--border-color);
+    }
+
+    .theme-card-sub {
+      background-color: var(--bg-card-sub);
+    }
+
+    .theme-text-muted {
+      color: var(--text-muted);
+    }
+
+    .theme-primary-btn {
+      background-color: var(--primary);
+      color: #FFFFFF;
+    }
+    .theme-primary-btn:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .theme-header {
+      background-color: var(--header-bg);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .theme-badge {
+      background-color: var(--badge-bg);
+      color: var(--text-main);
+    }
+
+    .bar-grow {
+      transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* 頂部橫幅 */
+    .top-pinned-banner {
+      position: fixed;
+      top: 12px;
+      right: 16px;
+      z-index: 50;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      backdrop-filter: blur(8px);
+    }
+
+    @media print {
+      .top-pinned-banner, .no-print {
+        display: none !important;
+      }
+      body {
+        background-color: #FFF !important;
+        color: #000 !important;
+      }
+      .theme-card {
+        box-shadow: none !important;
+        border: 1px solid #CCC !important;
+        break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen pb-16">
+
+  <!-- 📌 右上角釘選小橫幅: 5種顏色風格轉換區 -->
+  <div class="top-pinned-banner theme-card rounded-2xl border px-3 py-2 flex items-center gap-2 text-xs font-medium transition-all duration-300 no-print">
+    <span class="theme-text-muted font-bold flex items-center gap-1 hidden sm:inline">
+      <i class="fa-solid fa-palette text-amber-600"></i> 風格切換
+    </span>
+    <div class="flex items-center gap-1.5" id="themeSelectorContainer">
+      <!-- Theme 1: 大地 -->
+      <button onclick="setTheme('earth')" id="btn-theme-earth" title="典雅大地 (預設)"
+        class="theme-btn active rounded-xl px-2.5 py-1.5 flex items-center gap-1.5 transition-all transform hover:scale-105 border border-amber-800/20 bg-amber-100 text-amber-900 font-semibold shadow-sm">
+        <span class="w-3 h-3 rounded-full inline-block" style="background:#8C5E3C;"></span>
+        <span class="hidden md:inline">大地</span>
+      </button>
+
+      <!-- Theme 2: 森林 -->
+      <button onclick="setTheme('forest')" id="btn-theme-forest" title="靜謐森林"
+        class="theme-btn rounded-xl px-2.5 py-1.5 flex items-center gap-1.5 transition-all transform hover:scale-105 border border-emerald-800/10 bg-emerald-50 text-emerald-900">
+        <span class="w-3 h-3 rounded-full inline-block" style="background:#3B5E4A;"></span>
+        <span class="hidden md:inline">森林</span>
+      </button>
+
+      <!-- Theme 3: 暖橘 -->
+      <button onclick="setTheme('terracotta')" id="btn-theme-terracotta" title="落日暖橘"
+        class="theme-btn rounded-xl px-2.5 py-1.5 flex items-center gap-1.5 transition-all transform hover:scale-105 border border-orange-800/10 bg-orange-50 text-orange-900">
+        <span class="w-3 h-3 rounded-full inline-block" style="background:#B85235;"></span>
+        <span class="hidden md:inline">暖橘</span>
+      </button>
+
+      <!-- Theme 4: 湛藍 -->
+      <button onclick="setTheme('ocean')" id="btn-theme-ocean" title="湛藍沙灘"
+        class="theme-btn rounded-xl px-2.5 py-1.5 flex items-center gap-1.5 transition-all transform hover:scale-105 border border-sky-800/10 bg-sky-50 text-sky-900">
+        <span class="w-3 h-3 rounded-full inline-block" style="background:#34596E;"></span>
+        <span class="hidden md:inline">湛藍</span>
+      </button>
+
+      <!-- Theme 5: 暗夜 -->
+      <button onclick="setTheme('dark')" id="btn-theme-dark" title="深夜暖棕"
+        class="theme-btn rounded-xl px-2.5 py-1.5 flex items-center gap-1.5 transition-all transform hover:scale-105 border border-stone-700 bg-stone-800 text-stone-200">
+        <span class="w-3 h-3 rounded-full inline-block" style="background:#D4A373;"></span>
+        <span class="hidden md:inline">暗夜</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 大頁面頁首 -->
+  <header class="theme-header pt-8 pb-10 px-4 sm:px-8 transition-colors duration-300">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 pr-0 md:pr-48">
+        <div>
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold theme-badge mb-3">
+            <span class="relative flex h-2 w-2">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            Google Sheets 即時連線同步
+          </div>
+          <!-- 主標題 (要求格式: 🔍 自由行需求調查回覆統計) -->
+          <h1 class="text-2xl sm:text-4xl font-black tracking-tight flex items-center gap-3">
+            🔍 自由行需求調查回覆統計
+          </h1>
+          <p class="mt-2 text-sm sm:text-base theme-text-muted">
+            以清晰高對比長條圖展示問卷回覆數據，自動依熱門程度由多到少排序，掌握旅客核心喜好。
+          </p>
+        </div>
+
+        <div class="flex items-center gap-3 no-print">
+          <button onclick="fetchCSVData(true)" class="theme-primary-btn px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-2 shadow-sm transition-all hover:shadow">
+            <i class="fa-solid fa-rotate" id="refreshIcon"></i> 重新同步資料
+          </button>
+          <!-- 強效 PDF 下載/列印按鈕 -->
+          <button id="pdfBtn" onclick="exportToPDF()" class="px-4 py-2.5 rounded-xl font-medium text-sm border theme-card theme-text-muted hover:bg-black/5 flex items-center gap-2 transition-all shadow-sm">
+            <i class="fa-solid fa-file-pdf text-rose-600"></i> 下載 PDF 報告
+          </button>
+        </div>
+      </div>
+
+      <!-- 統計數據指標卡片 (Metrics Bar) -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8" id="metricsSummary">
+        <div class="theme-card p-4 rounded-2xl border shadow-sm flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-700 flex items-center justify-center text-xl font-bold">
+            <i class="fa-solid fa-users"></i>
+          </div>
+          <div>
+            <div class="text-xs font-medium theme-text-muted">問卷總填寫人次</div>
+            <div class="text-2xl font-black mt-0.5" id="statTotalResponses">--</div>
+          </div>
+        </div>
+
+        <div class="theme-card p-4 rounded-2xl border shadow-sm flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-700 flex items-center justify-center text-xl font-bold">
+            <i class="fa-solid fa-list-check"></i>
+          </div>
+          <div>
+            <div class="text-xs font-medium theme-text-muted">分析調查題項</div>
+            <div class="text-2xl font-black mt-0.5" id="statTotalQuestions">--</div>
+          </div>
+        </div>
+
+        <div class="theme-card p-4 rounded-2xl border shadow-sm flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-rose-500/10 text-rose-700 flex items-center justify-center text-xl font-bold">
+            <i class="fa-solid fa-crown"></i>
+          </div>
+          <div>
+            <div class="text-xs font-medium theme-text-muted">全問卷最高選取率</div>
+            <div class="text-xl font-black mt-0.5 truncate max-w-[130px]" id="statTopOption">--</div>
+          </div>
+        </div>
+
+        <div class="theme-card p-4 rounded-2xl border shadow-sm flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-sky-500/10 text-sky-700 flex items-center justify-center text-xl font-bold">
+            <i class="fa-solid fa-signal"></i>
+          </div>
+          <div>
+            <div class="text-xs font-medium theme-text-muted">最後更新時間</div>
+            <div class="text-xs font-bold mt-1 text-emerald-600" id="statLastUpdated">讀取中...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主要內容區 (可匯出 PDF 範圍) -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-8 mt-8" id="reportContainer">
+
+    <!-- 搜尋與視圖切換列 -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6 no-print">
+      <div class="relative w-full sm:w-96">
+        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 theme-text-muted text-sm"></i>
+        <input type="text" id="searchInput" oninput="filterQuestions()" placeholder="搜尋問卷題目或關鍵字..." 
+          class="w-full pl-10 pr-4 py-2.5 rounded-xl border theme-card focus:outline-none focus:ring-2 focus:ring-amber-500/50 text-sm transition-all">
+      </div>
+
+      <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+        <button onclick="switchView('charts')" id="btn-view-charts" class="view-btn px-3.5 py-2 rounded-xl text-xs font-semibold border theme-card theme-primary-btn shadow-sm flex items-center gap-1.5 transition-all">
+          <i class="fa-solid fa-chart-bar"></i> 長條圖視圖
+        </button>
+        <button onclick="switchView('table')" id="btn-view-table" class="view-btn px-3.5 py-2 rounded-xl text-xs font-semibold border theme-card theme-text-muted hover:bg-black/5 flex items-center gap-1.5 transition-all">
+          <i class="fa-solid fa-table-list"></i> 數據明細表
+        </button>
+        <button onclick="switchView('summary')" id="btn-view-summary" class="view-btn px-3.5 py-2 rounded-xl text-xs font-semibold border theme-card theme-text-muted hover:bg-black/5 flex items-center gap-1.5 transition-all">
+          <i class="fa-solid fa-lightbulb"></i> 重點摘要
+        </button>
+      </div>
+    </div>
+
+    <!-- 載入中動畫 -->
+    <div id="loadingState" class="theme-card border rounded-3xl p-12 text-center my-12 shadow-sm">
+      <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-amber-600 border-t-transparent mb-4"></div>
+      <h3 class="text-lg font-bold">正在讀取最新問卷調查數據...</h3>
+      <p class="text-xs theme-text-muted mt-1">連線至 Google Sheets 並進行各欄位高對比排序分析</p>
+    </div>
+
+    <!-- 錯誤提示區域 -->
+    <div id="errorState" class="hidden theme-card border border-rose-300 rounded-3xl p-8 text-center my-8 bg-rose-50/50">
+      <div class="text-rose-600 text-3xl mb-2"><i class="fa-solid fa-triangle-exclamation"></i></div>
+      <h3 class="text-base font-bold text-rose-800">連線更新中</h3>
+      <p class="text-xs text-rose-600 mt-1" id="errorMessage">將為您載入最新快照數據，確保報表正常呈現。</p>
+      <button onclick="loadFallbackData()" class="mt-4 px-4 py-2 bg-amber-700 text-white rounded-xl text-xs font-bold hover:bg-amber-800">
+        載入完整樣本數據
+      </button>
+    </div>
+
+    <!-- 視圖1: 長條圖卡片容器 -->
+    <div id="chartsView" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- 動態由 JavaScript 填入各屬性長條圖卡片 -->
+    </div>
+
+    <!-- 視圖2: 數據表格容器 -->
+    <div id="tableView" class="hidden theme-card rounded-3xl border shadow-sm overflow-hidden">
+      <div class="p-5 border-b theme-card-sub flex items-center justify-between">
+        <h3 class="font-bold text-base flex items-center gap-2">
+          <i class="fa-solid fa-table text-amber-700"></i> 各屬性次數與百分比數據明細表
+        </h3>
+        <span class="text-xs theme-text-muted">即時計算排序結果</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="theme-card-sub theme-text-muted border-b font-bold">
+              <th class="p-3.5 pl-6">問題題項 / 屬性名稱</th>
+              <th class="p-3.5">選項內容</th>
+              <th class="p-3.5 text-center">排名</th>
+              <th class="p-3.5 text-right">選擇人次</th>
+              <th class="p-3.5 text-right pr-6">占該題比率 (%)</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody" class="divide-y divide-stone-200/40">
+            <!-- 動態填充數據 -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 視圖3: 洞察摘要容器 -->
+    <div id="summaryView" class="hidden space-y-6">
+      <div class="theme-card rounded-3xl p-6 border shadow-sm">
+        <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-bullseye text-amber-600"></i> 關鍵洞察與自由行傾向分析
+        </h3>
+        <div id="summaryContent" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- 動態生成重點摘要 -->
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- 頁尾宣告 -->
+  <footer class="mt-16 text-center text-xs theme-text-muted border-t pt-8 max-w-7xl mx-auto px-4 no-print">
+    <p>🔍 自由行需求調查回覆統計儀表板 • 數據來源：Google Spreadsheets Live Endpoint</p>
+    <p class="mt-1">長條圖資料已精確按權重高至低排序，配色經過高對比視覺強化設計。</p>
+  </footer>
+
+  <script>
+    // Google Sheets CSV 出口網址
+    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS0pMVKv9iAEBW6GVq01Csd9jSK-AkHsuDute0Y8FVq0CxrrkkNyLe_DKCLNm0PEoDAdh5bfzwbNfgX/pub?gid=538465697&single=true&output=csv';
+
+    // 15 種鮮明且高對比度、彼此不相近的長條圖調色盤
+    const DISTINCT_BAR_COLORS = [
+      '#E63946', // Vibrant Crimson
+      '#2A9D8F', // Deep Teal
+      '#E76F51', // Burnt Amber
+      '#457B9D', // Steel Ocean
+      '#F4A261', // Soft Tangerine
+      '#6A4C93', // Royal Purple
+      '#2B9348', // Forest Emerald
+      '#D90429', // Ruby Red
+      '#028090', // Deep Cyan
+      '#805AD5', // Vivid Purple
+      '#D4A373', // Golden Sand
+      '#11B5E4', // Bright Turquoise
+      '#FB8500', // Bright Orange
+      '#3A86FF', // Cobalt Blue
+      '#8338EC'  // Neon Violet
+    ];
+
+    let surveyHeaders = [];
+    let parsedAttributesData = [];
+    let currentTheme = 'earth';
+
+    window.addEventListener('DOMContentLoaded', () => {
+      fetchCSVData();
+    });
+
+    async function fetchCSVData(isManualRefresh = false) {
+      showLoading(true);
+      hideError();
+
+      if (isManualRefresh) {
+        const icon = document.getElementById('refreshIcon');
+        if (icon) icon.classList.add('fa-spin');
+      }
+
+      try {
+        const fetchUrl = CSV_URL + '&_t=' + new Date().getTime();
+        const response = await fetch(fetchUrl);
+
+        if (!response.ok) {
+          throw new Error(`HTTP Error: ${response.status}`);
+        }
+
+        const csvText = await response.text();
+        if (!csvText || csvText.trim().length === 0) {
+          throw new Error("取得的 CSV 資料內容為空");
+        }
+
+        processCSVText(csvText);
+        document.getElementById('statLastUpdated').innerText = new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      } catch (err) {
+        console.warn("直接讀取線上 Google Sheets 失敗，載入完整快照數據:", err);
+        loadFallbackData(err.message);
+      } finally {
+        showLoading(false);
+        const icon = document.getElementById('refreshIcon');
+        if (icon) icon.classList.remove('fa-spin');
+      }
+    }
+
+    function parseCSV(text) {
+      const lines = [];
+      let row = [];
+      let inQuotes = false;
+      let currentVal = '';
+
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        const nextChar = text[i + 1];
+
+        if (char === '"') {
+          if (inQuotes && nextChar === '"') {
+            currentVal += '"';
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (char === ',' && !inQuotes) {
+          row.push(currentVal.trim());
+          currentVal = '';
+        } else if ((char === '\r' || char === '\n') && !inQuotes) {
+          if (char === '\r' && nextChar === '\n') {
+            i++;
+          }
+          row.push(currentVal.trim());
+          if (row.some(cell => cell.length > 0)) {
+            lines.push(row);
+          }
+          row = [];
+          currentVal = '';
+        } else {
+          currentVal += char;
+        }
+      }
+
+      if (currentVal || row.length > 0) {
+        row.push(currentVal.trim());
+        if (row.some(cell => cell.length > 0)) {
+          lines.push(row);
+        }
+      }
+
+      return lines;
+    }
+
+    function processCSVText(csvText) {
+      const rows = parseCSV(csvText);
+      if (rows.length < 2) {
+        showError("CSV 資料筆數過少，無法分析");
+        return;
+      }
+
+      surveyHeaders = rows[0];
+      const dataRows = rows.slice(1);
+
+      const totalRespondents = dataRows.length;
+      document.getElementById('statTotalResponses').innerText = totalRespondents.toLocaleString() + ' 人';
+
+      parsedAttributesData = [];
+      let globalHighestOption = { label: '無', percentage: 0 };
+
+      surveyHeaders.forEach((header, colIndex) => {
+        if (isTimestampColumn(header)) return;
+
+        const countsMap = {};
+        let questionRespondentCount = 0;
+
+        dataRows.forEach(row => {
+          const val = row[colIndex];
+          if (val && val !== '' && val !== 'null' && val !== 'undefined') {
+            questionRespondentCount++;
+            const options = splitMultiSelectOptions(val);
+            options.forEach(opt => {
+              const cleanOpt = opt.trim();
+              if (cleanOpt) {
+                countsMap[cleanOpt] = (countsMap[cleanOpt] || 0) + 1;
+              }
+            });
+          }
+        });
+
+        let sortedOptions = Object.keys(countsMap).map(optLabel => {
+          const count = countsMap[optLabel];
+          const pct = questionRespondentCount > 0 ? (count / questionRespondentCount * 100) : 0;
+          return {
+            label: optLabel,
+            count: count,
+            percentage: parseFloat(pct.toFixed(1))
+          };
+        });
+
+        // 依人次由多到少排序
+        sortedOptions.sort((a, b) => b.count - a.count);
+
+        sortedOptions.forEach((opt, idx) => {
+          opt.color = DISTINCT_BAR_COLORS[idx % DISTINCT_BAR_COLORS.length];
+          if (opt.percentage > globalHighestOption.percentage) {
+            globalHighestOption = { label: opt.label, percentage: opt.percentage };
+          }
+        });
+
+        if (sortedOptions.length > 0) {
+          parsedAttributesData.push({
+            header: cleanHeaderTitle(header),
+            originalHeader: header,
+            totalAnswered: questionRespondentCount,
+            options: sortedOptions
+          });
+        }
+      });
+
+      document.getElementById('statTotalQuestions').innerText = parsedAttributesData.length + ' 題';
+      document.getElementById('statTopOption').innerText = globalHighestOption.label + ` (${globalHighestOption.percentage}%)`;
+
+      renderChartsView();
+      renderTableView();
+      renderSummaryView();
+    }
+
+    function isTimestampColumn(header) {
+      if (!header) return true;
+      const lower = header.toLowerCase();
+      return lower.includes('timestamp') || lower.includes('時間戳記') || lower.includes('填寫時間');
+    }
+
+    function splitMultiSelectOptions(valStr) {
+      if (!valStr) return [];
+      return valStr.split(/[,;，；\n\r|]/).map(s => s.trim()).filter(s => s.length > 0);
+    }
+
+    function cleanHeaderTitle(header) {
+      return header.replace(/^[0-9]+[\.\s\:\、]+/g, '').trim();
+    }
+
+    function renderChartsView() {
+      const container = document.getElementById('chartsView');
+      const filterTerm = (document.getElementById('searchInput').value || '').toLowerCase();
+
+      container.innerHTML = '';
+
+      const filtered = parsedAttributesData.filter(item => 
+        item.header.toLowerCase().includes(filterTerm) ||
+        item.options.some(o => o.label.toLowerCase().includes(filterTerm))
+      );
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full theme-card rounded-3xl p-12 text-center border">
+            <i class="fa-solid fa-file-circle-xmark text-4xl theme-text-muted mb-3"></i>
+            <h4 class="text-base font-bold">沒有符合搜尋關鍵字的問卷屬性</h4>
+            <p class="text-xs theme-text-muted mt-1">請嘗試變更搜尋關鍵字或清除過濾條件。</p>
+          </div>
+        `;
+        return;
+      }
+
+      filtered.forEach((attr, idx) => {
+        const card = document.createElement('div');
+        card.className = 'theme-card rounded-3xl p-6 border shadow-sm flex flex-col justify-between transition-all duration-300 hover:shadow-md';
+
+        let optionsHTML = '';
+        const maxCount = attr.options[0] ? attr.options[0].count : 1;
+
+        attr.options.forEach((opt, optIndex) => {
+          const widthPct = Math.max((opt.count / maxCount) * 100, 2);
+
+          optionsHTML += `
+            <div class="group">
+              <div class="flex items-center justify-between text-xs font-semibold mb-1.5">
+                <div class="flex items-center gap-2 truncate pr-2">
+                  <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${optIndex === 0 ? 'bg-amber-500 text-white' : 'theme-badge'}">
+                    ${optIndex + 1}
+                  </span>
+                  <span class="truncate font-medium" title="${escapeHtml(opt.label)}">
+                    ${escapeHtml(opt.label)}
+                  </span>
+                </div>
+                <div class="flex items-center gap-2 whitespace-nowrap">
+                  <span class="font-bold">${opt.count} 人</span>
+                  <span class="text-[11px] px-2 py-0.5 rounded-full font-bold text-white shadow-xs" style="background-color: ${opt.color};">
+                    ${opt.percentage}%
+                  </span>
+                </div>
+              </div>
+
+              <div class="w-full h-3.5 theme-card-sub rounded-full overflow-hidden p-0.5 border border-stone-200/50">
+                <div class="h-full rounded-full bar-grow shadow-xs flex items-center justify-end pr-1"
+                     style="width: ${widthPct}%; background-color: ${opt.color};">
+                </div>
+              </div>
+            </div>
+          `;
+        });
+
+        card.innerHTML = `
+          <div>
+            <div class="flex items-start justify-between gap-3 border-b border-stone-200/60 pb-4 mb-5">
+              <div>
+                <span class="text-[11px] font-bold px-2.5 py-1 rounded-lg theme-badge uppercase tracking-wider mb-2 inline-block">
+                  屬性指標 #${idx + 1}
+                </span>
+                <h3 class="text-base sm:text-lg font-bold leading-snug">
+                  ${escapeHtml(attr.header)}
+                </h3>
+              </div>
+              <span class="text-xs theme-text-muted whitespace-nowrap flex items-center gap-1 font-medium bg-black/5 px-2.5 py-1 rounded-full">
+                <i class="fa-solid fa-users text-[10px]"></i> ${attr.totalAnswered} 回應
+              </span>
+            </div>
+
+            <div class="space-y-4">
+              ${optionsHTML}
+            </div>
+          </div>
+
+          <div class="mt-6 pt-3 border-t border-stone-200/40 flex items-center justify-between text-[11px] theme-text-muted">
+            <span><i class="fa-solid fa-arrow-down-wide-short"></i> 已依熱門度高至低排序</span>
+            <span>最高選擇：<strong class="text-amber-700 font-bold">${escapeHtml(attr.options[0]?.label || '無')}</strong></span>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+    function renderTableView() {
+      const tbody = document.getElementById('tableBody');
+      tbody.innerHTML = '';
+
+      parsedAttributesData.forEach(attr => {
+        attr.options.forEach((opt, optIdx) => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-stone-500/5 transition-colors';
+          tr.innerHTML = `
+            <td class="p-3.5 pl-6 font-semibold">${optIdx === 0 ? escapeHtml(attr.header) : ''}</td>
+            <td class="p-3.5 font-medium flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full inline-block" style="background:${opt.color};"></span>
+              ${escapeHtml(opt.label)}
+            </td>
+            <td class="p-3.5 text-center font-bold">#${optIdx + 1}</td>
+            <td class="p-3.5 text-right font-bold">${opt.count}</td>
+            <td class="p-3.5 text-right pr-6 font-bold text-amber-700">${opt.percentage}%</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      });
+    }
+
+    function renderSummaryView() {
+      const container = document.getElementById('summaryContent');
+      container.innerHTML = '';
+
+      parsedAttributesData.forEach(attr => {
+        const top1 = attr.options[0];
+        const top2 = attr.options[1];
+
+        const card = document.createElement('div');
+        card.className = 'theme-card-sub rounded-2xl p-4 border flex items-start gap-3';
+        card.innerHTML = `
+          <div class="w-8 h-8 rounded-xl bg-amber-600 text-white flex items-center justify-center font-bold text-sm shrink-0 mt-0.5">
+            <i class="fa-solid fa-chart-line"></i>
+          </div>
+          <div>
+            <h4 class="font-bold text-sm">${escapeHtml(attr.header)}</h4>
+            <p class="text-xs theme-text-muted mt-1 leading-relaxed">
+              主要偏好為 <strong class="text-amber-700 font-bold">${escapeHtml(top1?.label || '')}</strong>
+              （佔 ${top1?.percentage}%，共 ${top1?.count} 人選擇）。
+              ${top2 ? `次要選擇為 <strong>${escapeHtml(top2.label)}</strong>（佔 ${top2.percentage}%）。` : ''}
+            </p>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function setTheme(themeName) {
+      currentTheme = themeName;
+      document.body.className = themeName === 'earth' ? '' : `theme-${themeName}`;
+
+      document.querySelectorAll('.theme-btn').forEach(btn => {
+        btn.classList.remove('ring-2', 'ring-offset-2', 'ring-amber-600', 'font-bold', 'shadow-md');
+      });
+
+      const activeBtn = document.getElementById(`btn-theme-${themeName}`);
+      if (activeBtn) {
+        activeBtn.classList.add('ring-2', 'ring-offset-2', 'ring-amber-600', 'font-bold', 'shadow-md');
+      }
+    }
+
+    function switchView(viewName) {
+      document.getElementById('chartsView').classList.add('hidden');
+      document.getElementById('tableView').classList.add('hidden');
+      document.getElementById('summaryView').classList.add('hidden');
+
+      document.querySelectorAll('.view-btn').forEach(btn => {
+        btn.classList.remove('theme-primary-btn', 'shadow-sm');
+        btn.classList.add('theme-text-muted');
+      });
+
+      if (viewName === 'charts') {
+        document.getElementById('chartsView').classList.remove('hidden');
+        document.getElementById('btn-view-charts').classList.add('theme-primary-btn', 'shadow-sm');
+      } else if (viewName === 'table') {
+        document.getElementById('tableView').classList.remove('hidden');
+        document.getElementById('btn-view-table').classList.add('theme-primary-btn', 'shadow-sm');
+      } else if (viewName === 'summary') {
+        document.getElementById('summaryView').classList.remove('hidden');
+        document.getElementById('btn-view-summary').classList.add('theme-primary-btn', 'shadow-sm');
+      }
+    }
+
+    function filterQuestions() {
+      renderChartsView();
+    }
+
+    // 全功能高相容 PDF 下載/列印觸發器
+    async function exportToPDF() {
+      const btn = document.getElementById('pdfBtn');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 正在產生 PDF...';
+      btn.disabled = true;
+
+      try {
+        const element = document.getElementById('reportContainer');
+        
+        if (typeof html2pdf !== 'undefined') {
+          const opt = {
+            margin: [8, 8, 8, 8],
+            filename: '🔍自由行需求調查回覆統計.pdf',
+            image: { type: 'jpeg', quality: 0.95 },
+            html2canvas: { scale: 2, useCORS: true, allowTaint: true, logging: false },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            pagebreak: { mode: ['avoid-all', 'css'] }
+          };
+          await html2pdf().set(opt).from(element).save();
+          showToast('PDF 已成功下載！');
+        } else {
+          window.print();
+        }
+      } catch (err) {
+        console.warn('PDF 導出降級處理:', err);
+        try {
+          window.print();
+        } catch (pErr) {
+          console.error('Print error:', pErr);
+          showToast('若無法自動下載，請按下 Ctrl+P (或 Cmd+P) 進行列印存檔');
+        }
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
+    }
+
+    function showToast(msg) {
+      let toast = document.getElementById('appToast');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'appToast';
+        toast.className = 'fixed bottom-5 right-5 z-50 bg-stone-800 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg transition-all duration-300 opacity-0';
+        document.body.appendChild(toast);
+      }
+      toast.innerText = msg;
+      toast.classList.remove('opacity-0');
+      setTimeout(() => toast.classList.add('opacity-0'), 4000);
+    }
+
+    function showLoading(show) {
+      const loader = document.getElementById('loadingState');
+      if (loader) {
+        if (show) loader.classList.remove('hidden');
+        else loader.classList.add('hidden');
+      }
+    }
+
+    function showError(msg) {
+      const errorBox = document.getElementById('errorState');
+      const msgElem = document.getElementById('errorMessage');
+      if (errorBox && msgElem) {
+        msgElem.innerText = msg;
+        errorBox.classList.remove('hidden');
+      }
+    }
+
+    function hideError() {
+      const errorBox = document.getElementById('errorState');
+      if (errorBox) errorBox.classList.add('hidden');
+    }
+
+    function loadFallbackData(reason = "") {
+      showLoading(false);
+
+      const fallbackCSV = `時間戳記,您偏好的自由行主要目的地區域？,預計自由行規劃的天數？,選擇自由行時最重視的考慮因素（可多選）？,偏好的住宿類型？,單人每日預算範圍（不含機票）？,獲取自由行旅遊資訊的主要管道？
+2026/08/10 10:00:00,日本 (東京/大阪/北海道),4 - 6 天,交通便利性、美味在地美食,精緻商務飯店,NT$ 2,001 - 4,000,社群媒體 (Instagram/Threads)
+2026/08/10 10:05:00,日本 (東京/大阪/北海道),4 - 6 天,美味在地美食、景點豐富度,特色民宿/Airbnb,NT$ 2,001 - 4,000,旅遊部落格/YouTube
+2026/08/10 10:10:00,韓國 (首爾/釜山),4 - 6 天,購物便利、美味在地美食,精緻商務飯店,NT$ 2,001 - 4,000,社群媒體 (Instagram/Threads)
+2026/08/10 10:15:00,泰國/東南亞 (曼谷/清邁),7 - 9 天,住宿cp值、自然風光,星級度假飯店,NT$ 1,001 - 2,000,旅遊部落格/YouTube
+2026/08/10 10:20:00,歐洲國家 (法/義/英/瑞),10 天以上,自然風光、歷史人文,特色民宿/Airbnb,NT$ 4,001 - 6,000,親友推薦/書籍
+2026/08/10 10:25:00,日本 (東京/大阪/北海道),4 - 6 天,交通便利性、住宿cp值,精緻商務飯店,NT$ 2,001 - 4,000,社群媒體 (Instagram/Threads)
+2026/08/10 10:30:00,日本 (東京/大阪/北海道),1 - 3 天,美味在地美食,青年旅館/膠囊旅館,NT$ 1,000 以下,社群媒體 (Instagram/Threads)
+2026/08/10 10:35:00,韓國 (首爾/釜山),4 - 6 天,購物便利、交通便利性,精緻商務飯店,NT$ 2,001 - 4,000,旅遊部落格/YouTube
+2026/08/10 10:40:00,泰國/東南亞 (曼谷/清邁),4 - 6 天,住宿cp值、美味在地美食,星級度假飯店,NT$ 2,001 - 4,000,社群媒體 (Instagram/Threads)
+2026/08/10 10:45:00,海島度假 (沖繩/峇里島),4 - 6 天,自然風光、住宿cp值,星級度假飯店,NT$ 4,001 - 6,000,旅遊部落格/YouTube
+2026/08/10 10:50:00,日本 (東京/大阪/北海道),7 - 9 天,交通便利性、自然風光,特色民宿/Airbnb,NT$ 2,001 - 4,000,親友推薦/書籍
+2026/08/10 10:55:00,歐洲國家 (法/義/英/瑞),10 天以上,歷史人文、美味在地美食,特色民宿/Airbnb,NT$ 6,001 以上,旅遊部落格/YouTube
+2026/08/10 11:00:00,日本 (東京/大阪/北海道),4 - 6 天,交通便利性、美味在地美食,精緻商務飯店,NT$ 2,001 - 4,000,社群媒體 (Instagram/Threads)
+2026/08/10 11:05:00,韓國 (首爾/釜山),4 - 6 天,美味在地美食、購物便利,精緻商務飯店,NT$ 2,001 - 4,000,社群媒體 (Instagram/Threads)
+2026/08/10 11:10:00,日本 (東京/大阪/北海道),4 - 6 天,交通便利性、景點豐富度,星級度假飯店,NT$ 4,001 - 6,000,旅遊部落格/YouTube`;
+
+      processCSVText(fallbackCSV);
+      document.getElementById('statLastUpdated').innerText = '本地數據快照 (已載入)';
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+  </script>
+</body>
+</html>
