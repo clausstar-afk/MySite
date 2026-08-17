@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>每日一句學英語 | Daily English Learning</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#035483',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- JS Confetti for Quiz completion -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .dark .glass-card {
+            background: rgba(30, 41, 59, 0.85);
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #6366f1 0%, #3b82f6 50%, #14b8a6 100%);
+        }
+
+        .pulse-subtle {
+            animation: pulse-light 2s infinite ease-in-out;
+        }
+
+        @keyframes pulse-light {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.95; transform: scale(1.01); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans min-h-screen transition-colors duration-300">
+
+    <header class="sticky top-0 z-40 w-full border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <!-- Logo -->
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="loadQuote(currentQuoteIndex)">
+                <div class="w-10 h-10 rounded-xl gradient-bg flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
+                    <i class="fa-solid fa-graduation-cap text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-none tracking-tight">Daily English</h1>
+                    <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">每日一句學英語</span>
+                </div>
+            </div>
+
+            <!-- Header Controls -->
+            <div class="flex items-center space-x-2 sm:space-x-4">
+                <!-- Gemini API Key Button -->
+                <button id="btn-api-key" onclick="toggleApiKeyModal()" class="flex items-center space-x-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-500/10 to-indigo-500/10 hover:from-purple-500/20 hover:to-indigo-500/20 border border-indigo-200 dark:border-indigo-800 rounded-full text-indigo-600 dark:text-indigo-400 text-xs font-semibold transition-all" title="設定 Gemini API Key">
+                    <i class="fa-solid fa-wand-magic-sparkles text-amber-500 animate-pulse"></i>
+                    <span id="gemini-status-text">Gemini 發音: 關閉</span>
+                </button>
+
+                <!-- Streak Badge -->
+                <div class="flex items-center space-x-1.5 px-3 py-1.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-full text-amber-600 dark:text-amber-400 text-xs font-semibold shadow-sm">
+                    <i class="fa-solid fa-fire text-amber-500 animate-bounce"></i>
+                    <span>連續學習 <strong id="streak-count">3</strong> 天</span>
+                </div>
+
+                <!-- Bookmark Drawer Trigger -->
+                <button id="btn-bookmarks" onclick="toggleBookmarksModal()" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors relative" title="收藏金句">
+                    <i class="fa-regular fa-bookmark text-lg"></i>
+                    <span id="bookmark-badge" class="hidden absolute -top-1 -right-1 bg-indigo-600 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">0</span>
+                </button>
+
+                <!-- Audio Speed Selector -->
+                <div class="hidden sm:flex items-center space-x-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg text-xs">
+                    <span class="px-1.5 text-slate-400 font-medium">語速:</span>
+                    <button onclick="setSpeed(0.8)" id="speed-08" class="speed-btn px-2 py-0.5 rounded font-medium transition-colors">0.8x</button>
+                    <button onclick="setSpeed(1.0)" id="speed-10" class="speed-btn px-2 py-0.5 rounded font-medium bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400">1.0x</button>
+                </div>
+
+                <!-- Dark Mode Toggle -->
+                <button onclick="toggleDarkMode()" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors" title="切換深色/淺色模式">
+                    <i id="theme-icon" class="fa-solid fa-moon text-lg"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+
+        <!-- Navigation / Day Selector Controls -->
+        <div class="flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-slate-800/80 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 shadow-sm">
+            <div class="flex items-center space-x-2">
+                <button onclick="prevQuote()" class="p-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition text-slate-600 dark:text-slate-300" title="前一天">
+                    <i class="fa-solid fa-chevron-left text-sm"></i>
+                </button>
+                <div class="text-sm font-semibold px-2">
+                    <span id="current-day-label" class="text-indigo-600 dark:text-indigo-400">Day 1</span>
+                    <span class="text-slate-400 font-normal mx-1">/</span>
+                    <span id="total-days-label" class="text-slate-500">7</span>
+                </div>
+                <button onclick="nextQuote()" class="p-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition text-slate-600 dark:text-slate-300" title="後一天">
+                    <i class="fa-solid fa-chevron-right text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Tags / Categories -->
+            <div id="quote-tags" class="flex flex-wrap gap-2">
+                <!-- Dynamic Tag Badges -->
+            </div>
+
+            <!-- Random Quote Button -->
+            <button onclick="randomQuote()" class="text-xs font-semibold flex items-center space-x-1.5 px-3 py-2 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition">
+                <i class="fa-solid fa-shuffle"></i>
+                <span>隨機換一句</span>
+            </button>
+        </div>
+
+        <!-- Hero Quote Card -->
+        <section class="relative overflow-hidden rounded-3xl gradient-bg p-0.5 shadow-xl shadow-indigo-500/10">
+            <div class="bg-white dark:bg-slate-900 p-6 sm:p-10 rounded-[23px] relative z-10 space-y-6">
+                <!-- Card Header -->
+                <div class="flex items-center justify-between text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                    <span class="flex items-center space-x-1.5 text-indigo-600 dark:text-indigo-400 font-semibold">
+                        <i class="fa-solid fa-star"></i>
+                        <span id="quote-category">Daily Inspiration</span>
+                    </span>
+                    <span id="quote-date">2026.08.17</span>
+                </div>
+
+                <!-- Quote Text Area -->
+                <div class="space-y-4">
+                    <blockquote id="quote-english" class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white leading-snug tracking-tight">
+                        "Small habits, when practiced consistently, lead to remarkable results."
+                    </blockquote>
+                    <p id="quote-chinese" class="text-lg sm:text-xl text-slate-600 dark:text-slate-300 font-medium">
+                        （微小的習慣，只要持之以恆地練習，就能帶來顯著的成果。）
+                    </p>
+                </div>
+
+                <!-- Audio & Action Toolbar -->
+                <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center space-x-3">
+                        <!-- Play Audio Button -->
+                        <button id="btn-play-quote" onclick="playCurrentQuoteAudio()" class="flex items-center space-x-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-2xl font-medium shadow-md shadow-indigo-500/25 transition-all">
+                            <i id="icon-play-quote" class="fa-solid fa-volume-high"></i>
+                            <span id="label-play-quote">聆聽發音</span>
+                        </button>
+
+                        <!-- Copy Button -->
+                        <button onclick="copyQuoteToClipboard()" class="p-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition" title="複製金句">
+                            <i class="fa-regular fa-copy"></i>
+                        </button>
+
+                        <!-- Bookmark Button -->
+                        <button id="btn-bookmark-current" onclick="toggleCurrentBookmark()" class="p-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition" title="加入收藏">
+                            <i id="icon-bookmark-current" class="fa-regular fa-bookmark"></i>
+                        </button>
+                    </div>
+
+                    <!-- Voice Accent Switcher -->
+                    <div class="flex items-center space-x-1 text-xs text-slate-500 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                        <button onclick="setVoiceAccent('en-US')" id="accent-us" class="accent-btn px-2.5 py-1 rounded-lg font-medium transition bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm">美音 🇺🇸</button>
+                        <button onclick="setVoiceAccent('en-GB')" id="accent-uk" class="accent-btn px-2.5 py-1 rounded-lg font-medium transition">英音 🇬🇧</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Vocabulary Breakdown Section -->
+        <section class="space-y-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-bold flex items-center space-x-2">
+                    <span class="w-2.5 h-6 bg-indigo-600 rounded-full inline-block"></span>
+                    <span>重點單字與片語 (Vocabulary)</span>
+                </h2>
+                <span class="text-xs text-slate-400">點擊喇叭圖示可單獨發音</span>
+            </div>
+
+            <div id="vocab-container" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Dynamic Vocabulary Cards inserted here -->
+            </div>
+        </section>
+
+        <!-- Grammar & Sentence Pattern Analysis -->
+        <section class="space-y-4">
+            <h2 class="text-xl font-bold flex items-center space-x-2">
+                <span class="w-2.5 h-6 bg-teal-500 rounded-full inline-block"></span>
+                <span>句型解析 (Grammar Focus)</span>
+            </h2>
+
+            <div class="bg-white dark:bg-slate-800/80 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-700/60 shadow-sm space-y-4">
+                <div class="flex items-start space-x-3">
+                    <div class="w-8 h-8 rounded-xl bg-teal-100 dark:bg-teal-900/50 text-teal-600 dark:text-teal-300 flex items-center justify-center shrink-0 mt-0.5">
+                        <i class="fa-solid fa-lightbulb"></i>
+                    </div>
+                    <div class="space-y-2">
+                        <h3 id="grammar-title" class="font-bold text-slate-900 dark:text-white text-base">
+                            插入語結構 (Parenthetical Element)
+                        </h3>
+                        <p id="grammar-desc" class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                            句中的 <code class="px-1.5 py-0.5 bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300 rounded font-mono text-xs">, when practiced consistently,</code> 是一個修飾主詞 Small habits 的插入短語（省略 they are 的分詞結構）。原句骨幹為：<em>Small habits lead to remarkable results.</em>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Breakdown Visual Chips -->
+                <div id="grammar-breakdown" class="pt-3 border-t border-slate-100 dark:border-slate-700/60 flex flex-wrap gap-2 text-xs">
+                    <!-- Dynamic breakdown elements -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Situational Conversation Practice -->
+        <section class="space-y-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-bold flex items-center space-x-2">
+                    <span class="w-2.5 h-6 bg-sky-500 rounded-full inline-block"></span>
+                    <span>實用情境對話 (Dialogue)</span>
+                </h2>
+                <button onclick="playFullDialogue()" class="text-xs text-sky-600 dark:text-sky-400 hover:underline font-semibold flex items-center space-x-1">
+                    <i class="fa-solid fa-play text-[10px]"></i>
+                    <span>連續播放對話</span>
+                </button>
+            </div>
+
+            <div id="dialogue-container" class="bg-white dark:bg-slate-800/80 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-700/60 shadow-sm space-y-4">
+                <!-- Dynamic Conversation Bubbles -->
+            </div>
+        </section>
+
+        <!-- Daily Challenge & Quiz -->
+        <section class="space-y-4">
+            <h2 class="text-xl font-bold flex items-center space-x-2">
+                <span class="w-2.5 h-6 bg-amber-500 rounded-full inline-block"></span>
+                <span>今日小挑戰 (Daily Quiz)</span>
+            </h2>
+
+            <div class="bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent dark:from-amber-950/20 rounded-2xl p-6 border border-amber-200/60 dark:border-amber-800/40 shadow-sm space-y-5">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider flex items-center space-x-1.5">
+                        <i class="fa-solid fa-trophy"></i>
+                        <span>填空測驗</span>
+                    </span>
+                    <span id="quiz-status-badge" class="text-xs font-medium px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">未完成</span>
+                </div>
+
+                <p id="quiz-question" class="text-slate-800 dark:text-slate-200 font-medium text-base">
+                    請選出正確填入空格的單字：<br>
+                    <span class="font-semibold text-indigo-600 dark:text-indigo-400 mt-2 block font-mono">
+                        "Small habits, when practiced ________, lead to remarkable results."
+                    </span>
+                </p>
+
+                <!-- Options Grid -->
+                <div id="quiz-options" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <!-- Dynamic option buttons -->
+                </div>
+
+                <!-- Feedback Area -->
+                <div id="quiz-feedback" class="hidden p-4 rounded-xl text-sm font-medium transition-all"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Toast Notification Container -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-3 rounded-2xl shadow-xl flex items-center space-x-3 text-sm font-medium">
+            <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 dark:text-emerald-600"></i>
+            <span id="toast-message">完成！</span>
+        </div>
+    </div>
+
+    <!-- Bookmarks Modal -->
+    <div id="bookmarks-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-xl w-full max-h-[80vh] flex flex-col shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden transform scale-95 transition-transform duration-300">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700/60 flex items-center justify-between">
+                <h3 class="font-bold text-lg flex items-center space-x-2">
+                    <i class="fa-solid fa-bookmark text-indigo-600 dark:text-indigo-400"></i>
+                    <span>已收藏的金句</span>
+                </h3>
+                <button onclick="toggleBookmarksModal()" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content List -->
+            <div id="bookmarks-list" class="p-6 overflow-y-auto space-y-3 flex-1">
+                <!-- Dynamic bookmark items -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Gemini API Key Settings Modal -->
+    <div id="api-key-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700/60 pb-3">
+                <h3 class="font-bold text-lg flex items-center space-x-2 text-slate-900 dark:text-white">
+                    <i class="fa-solid fa-key text-amber-500"></i>
+                    <span>綁定 Google AI Studio API Key</span>
+                </h3>
+                <button onclick="toggleApiKeyModal()" class="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                綁定你的 API Key 後，系統將啟用超高音質的 <strong>Gemini 2.5 AI 語音</strong>，享受流暢且宛如美英真人教師的朗讀發音！
+                <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-indigo-600 dark:text-indigo-400 font-semibold underline hover:text-indigo-700 ml-1">
+                    免費獲取 Key <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                </a>
+            </p>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">API Key</label>
+                    <div class="relative">
+                        <input type="password" id="input-api-key" placeholder="AIzaSy..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-slate-100 font-mono">
+                        <button onclick="toggleApiKeyVisibility()" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs">
+                            <i id="icon-eye" class="fa-regular fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Gemini AI 聲線 (Voice)</label>
+                    <select id="select-gemini-voice" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-slate-100">
+                        <option value="Zephyr">Zephyr (Bright & Friendly - 明亮親切)</option>
+                        <option value="Puck">Puck (Upbeat & Energetic - 活力生動)</option>
+                        <option value="Kore" selected>Kore (Firm & Clear - 標準專業)</option>
+                        <option value="Aoede">Aoede (Breezy & Natural - 輕鬆自然)</option>
+                        <option value="Fenrir">Fenrir (Excitable & Warm - 熱情溫和)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-2 pt-2">
+                <button id="btn-save-api-key" onclick="saveApiKey()" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 transition flex items-center justify-center space-x-1">
+                    <span id="label-save-api-key">儲存並啟用 Gemini 發音</span>
+                </button>
+                <button onclick="testGeminiVoice()" class="px-3.5 py-2.5 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold transition flex items-center space-x-1">
+                    <i class="fa-solid fa-volume-high"></i>
+                    <span>測試音效</span>
+                </button>
+            </div>
+            
+            <button onclick="clearApiKey()" class="w-full text-center text-xs text-rose-500 hover:underline pt-1">
+                清除 API Key（切換回瀏覽器預設語音）
+            </button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-16 border-t border-slate-200 dark:border-slate-800 py-8 text-center text-xs text-slate-400">
+        <p>Daily English Learning Card • 持之以恆，每日進步一點點</p>
+    </footer>
+
+    <script>
+        // Database of quotes
+        const QUOTE_DATABASE = [
+            {
+                id: 1,
+                date: "2026.08.17",
+                category: "習慣與成長",
+                english: "Small habits, when practiced consistently, lead to remarkable results.",
+                chinese: "微小的習慣，只要持之以恆地練習，就能帶來顯著的成果。",
+                tags: ["Habits", "Growth", "Consistency"],
+                vocab: [
+                    {
+                        word: "consistently",
+                        ipa: "/kənˈsɪstəntli/",
+                        pos: "adv.",
+                        meaning: "一貫地；持之以恆地",
+                        example: "She practices English consistently every morning."
+                    },
+                    {
+                        word: "remarkable",
+                        ipa: "/rɪˈmɑːrkəbl/",
+                        pos: "adj.",
+                        meaning: "非凡的；顯著的；令人驚嘆的",
+                        example: "He made remarkable progress in just three months."
+                    },
+                    {
+                        word: "lead to",
+                        ipa: "/liːd tuː/",
+                        pos: "phr. v.",
+                        meaning: "導致；通往；帶來",
+                        example: "Hard work and patience will lead to success."
+                    }
+                ],
+                grammar: {
+                    title: "插入語結構 (Parenthetical Element)",
+                    desc: "句中的 ', when practiced consistently,' 是一個修飾主詞 Small habits 的插入短語（省略 they are 的分詞結構）。句子的核心結構為：Small habits lead to remarkable results.",
+                    chips: [
+                        { label: "主詞", text: "Small habits" },
+                        { label: "修飾語", text: "when practiced consistently" },
+                        { label: "動詞", text: "lead to" },
+                        { label: "受詞", text: "remarkable results" }
+                    ]
+                },
+                dialogue: [
+                    { speaker: "A", name: "Alex", text: "I feel overwhelmed by how much English I need to learn.", zh: "要學的英文好多，我覺得壓力好大。" },
+                    { speaker: "B", name: "Bella", text: "Don't worry! Remember, small habits, when practiced consistently, lead to remarkable results. Just 15 minutes a day is enough!", zh: "別擔心！記住，微小的習慣只要持之以恆，就能帶來顯著的成果。每天 15 分鐘就夠了！" }
+                ],
+                quiz: {
+                    question: "請選出正確填入空格的單字：\n\"Small habits, when practiced ________, lead to remarkable results.\"",
+                    options: ["consistently", "randomly", "rarely", "temporarily"],
+                    correctIndex: 0,
+                    explanation: "consistently（持之以恆地）為正確答案。句意為「微小的習慣，只要持之以恆地練習…」。"
+                }
+            },
+            {
+                id: 2,
+                date: "2026.08.18",
+                category: "心態與勇氣",
+                english: "The only limit to our realization of tomorrow will be our doubts of today.",
+                chinese: "實現明日理想唯一的障礙，就是我們對今天的疑慮。",
+                tags: ["Mindset", "Courage", "Future"],
+                vocab: [
+                    {
+                        word: "realization",
+                        ipa: "/ˌriːələˈzeɪʃn/",
+                        pos: "n.",
+                        meaning: "實現；體認",
+                        example: "This mark is the realization of her lifelong goal."
+                    },
+                    {
+                        word: "doubt",
+                        ipa: "/daʊt/",
+                        pos: "n. / v.",
+                        meaning: "懷疑；不相信",
+                        example: "Never let doubt hold you back from trying."
+                    }
+                ],
+                grammar: {
+                    title: "限定子句與抽象名詞搭配",
+                    desc: "句中的 'to our realization of tomorrow' 與 'of today' 構成對比修飾，強烈表達「今日的猶豫不決是阻礙明日成功的唯一原因」。",
+                    chips: [
+                        { label: "主詞", text: "The only limit..." },
+                        { label: "系動詞", text: "will be" },
+                        { label: "表語", text: "our doubts of today" }
+                    ]
+                },
+                dialogue: [
+                    { speaker: "A", name: "Chris", text: "Should I apply for that job abroad? I'm afraid I might fail.", zh: "我該申請那份國外的工作嗎？我怕我會失敗。" },
+                    { speaker: "B", name: "David", text: "Go for it! The only limit to our realization of tomorrow will be our doubts of today.", zh: "去試試看吧！實現明日理想唯一的障礙，就是我們對今天的疑慮。" }
+                ],
+                quiz: {
+                    question: "請選出同義詞或合適的單字：\n\"Don't let ________ ruin your opportunity to grow.\"",
+                    options: ["doubts", "courage", "confidence", "faith"],
+                    correctIndex: 0,
+                    explanation: "doubts（懷疑/猶豫）符合句意「別讓疑慮摧毀你成長的機會」。"
+                }
+            },
+            {
+                id: 3,
+                date: "2026.08.19",
+                category: "智慧與學習",
+                english: "Continuous learning is the minimum requirement for success in any field.",
+                chinese: "持續學習是在任何領域取得成功的最低門檻。",
+                tags: ["Learning", "Success", "Skill"],
+                vocab: [
+                    {
+                        word: "continuous",
+                        ipa: "/kənˈtɪnjuəs/",
+                        pos: "adj.",
+                        meaning: "持續不斷的；連續的",
+                        example: "Language learning requires continuous practice."
+                    },
+                    {
+                        word: "requirement",
+                        ipa: "/rɪˈkwaɪərmənt/",
+                        pos: "n.",
+                        meaning: "必要條件；要求",
+                        example: "Fluency is a major requirement for this international role."
+                    }
+                ],
+                grammar: {
+                    title: "動名詞當主詞 (Gerund as Subject)",
+                    desc: "句首的 Continuous learning 為動名詞短語作為全句主詞，後接單數動詞 is，簡潔有力地陳述事實或真理。",
+                    chips: [
+                        { label: "動名詞主詞", text: "Continuous learning" },
+                        { label: "動詞", text: "is" },
+                        { label: "受詞補語", text: "the minimum requirement..." }
+                    ]
+                },
+                dialogue: [
+                    { speaker: "A", name: "Emma", text: "Do you think I still need to take courses after graduation?", zh: "你覺得我畢業後還需要修課嗎？" },
+                    { speaker: "B", name: "Frank", text: "Definitely. Continuous learning is the minimum requirement for success in any field.", zh: "絕對要。持續學習是在任何領域取得成功的最低門檻。" }
+                ],
+                quiz: {
+                    question: "請選出正確的形容詞：\n\"________ learning helps you adapt to new challenges rapidly.\"",
+                    options: ["Continuous", "Temporary", "Passive", "Rare"],
+                    correctIndex: 0,
+                    explanation: "Continuous（持續不斷的）是此處最符合學習心態的形容詞。"
+                }
+            }
+        ];
+
+        // App State
+        let currentQuoteIndex = 0;
+        let speechRate = 1.0;
+        let speechLang = 'en-US';
+        let bookmarks = JSON.parse(localStorage.getItem('daily_english_bookmarks') || '[]');
+        let streakDays = parseInt(localStorage.getItem('daily_english_streak') || '3');
+        let quizAnswers = {}; // track completed quizzes
+        
+        let geminiApiKey = localStorage.getItem('gemini_api_key') || '';
+        let geminiVoice = localStorage.getItem('gemini_voice') || 'Kore';
+        let currentAudio = null;
+
+        // Initialize App on DOM Ready
+        window.onload = function() {
+            updateStreakUI();
+            updateBookmarkBadge();
+            updateGeminiStatusUI();
+            loadQuote(0);
+            
+            // Check system dark mode
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.documentElement.classList.add('dark');
+                document.getElementById('theme-icon').className = 'fa-solid fa-sun text-lg';
+            }
+        };
+
+        function base64ToArrayBuffer(base64) {
+            const binaryString = window.atob(base64);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        function pcmToWav(pcm16, sampleRate = 24000, numChannels = 1) {
+            const buffer = new ArrayBuffer(44 + pcm16.length * 2);
+            const view = new DataView(buffer);
+
+            /* RIFF identifier */
+            writeString(view, 0, 'RIFF');
+            /* RIFF chunk length */
+            view.setUint32(4, 36 + pcm16.length * 2, true);
+            /* RIFF type */
+            writeString(view, 8, 'WAVE');
+            /* format chunk identifier */
+            writeString(view, 12, 'fmt ');
+            /* format chunk length */
+            view.setUint32(16, 16, true);
+            /* sample format (raw PCM) */
+            view.setUint16(20, 1, true);
+            /* channel count */
+            view.setUint16(22, numChannels, true);
+            /* sample rate */
+            view.setUint32(24, sampleRate, true);
+            /* byte rate */
+            view.setUint32(28, sampleRate * numChannels * 2, true);
+            /* block align */
+            view.setUint16(32, numChannels * 2, true);
+            /* bits per sample */
+            view.setUint16(34, 16, true);
+            /* data chunk identifier */
+            writeString(view, 36, 'data');
+            /* data chunk length */
+            view.setUint32(40, pcm16.length * 2, true);
+
+            let offset = 44;
+            for (let i = 0; i < pcm16.length; i++, offset += 2) {
+                view.setInt16(offset, pcm16[i], true);
+            }
+
+            return new Blob([view], { type: 'audio/wav' });
+        }
+
+        function writeString(view, offset, string) {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        }
+
+        async function fetchGeminiTTS(text) {
+            if (!geminiApiKey) return null;
+
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${geminiApiKey}`;
+            const promptText = `Please read the following text clearly and naturally with standard pronunciation: "${text}"`;
+
+            const payload = {
+                contents: [{
+                    parts: [{ text: promptText }]
+                }],
+                generationConfig: {
+                    responseModalities: ["AUDIO"],
+                    speechConfig: {
+                        voiceConfig: {
+                            prebuiltVoiceConfig: { voiceName: geminiVoice }
+                        }
+                    }
+                }
+            };
+
+            let retries = 0;
+            const maxRetries = 2;
+            let delay = 1000;
+
+            while (retries <= maxRetries) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API Error: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    const part = result?.candidates?.[0]?.content?.parts?.[0];
+                    const audioData = part?.inlineData?.data;
+                    const mimeType = part?.inlineData?.mimeType || 'audio/L16;rate=24000';
+
+                    if (audioData) {
+                        const sampleRateMatch = mimeType.match(/rate=(\d+)/);
+                        const sampleRate = sampleRateMatch ? parseInt(sampleRateMatch[1], 10) : 24000;
+                        const pcmData = base64ToArrayBuffer(audioData);
+                        const pcm16 = new Int16Array(pcmData);
+                        const wavBlob = pcmToWav(pcm16, sampleRate);
+                        return URL.createObjectURL(wavBlob);
+                    }
+                } catch (e) {
+                    console.warn(`Gemini TTS fetch retry ${retries}:`, e);
+                    retries++;
+                    if (retries <= maxRetries) {
+                        await new Promise(r => setTimeout(r, delay));
+                        delay *= 2;
+                    }
+                }
+            }
+            return null;
+        }
+
+        async function speakText(text) {
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+
+            const playBtnLabel = document.getElementById('label-play-quote');
+            const playBtnIcon = document.getElementById('icon-play-quote');
+            const isMainQuote = text.includes(QUOTE_DATABASE[currentQuoteIndex].english);
+
+            if (isMainQuote && playBtnLabel && playBtnIcon) {
+                playBtnLabel.innerText = "生成語音中...";
+                playBtnIcon.className = "fa-solid fa-spinner animate-spin text-amber-400";
+            }
+
+            // Attempt Gemini AI TTS first if key exists
+            if (geminiApiKey) {
+                try {
+                    const audioUrl = await fetchGeminiTTS(text);
+                    if (audioUrl) {
+                        currentAudio = new Audio(audioUrl);
+                        if (speechRate !== 1.0) currentAudio.playbackRate = speechRate;
+
+                        currentAudio.onplay = () => {
+                            if (isMainQuote && playBtnLabel && playBtnIcon) {
+                                playBtnLabel.innerText = "Gemini 朗讀中...";
+                                playBtnIcon.className = "fa-solid fa-sparkles animate-pulse text-amber-300";
+                            }
+                        };
+
+                        currentAudio.onended = () => {
+                            if (isMainQuote && playBtnLabel && playBtnIcon) {
+                                playBtnLabel.innerText = "聆聽發音";
+                                playBtnIcon.className = "fa-solid fa-volume-high";
+                            }
+                        };
+
+                        await currentAudio.play();
+                        return;
+                    }
+                } catch (err) {
+                    console.warn('Gemini TTS failed, falling back to Web Speech API', err);
+                }
+            }
+
+            // Fallback: Web Speech API
+            if (!('speechSynthesis' in window)) {
+                showToast('您的瀏覽器不支援語音播放', 'error');
+                if (isMainQuote && playBtnLabel && playBtnIcon) {
+                    playBtnLabel.innerText = "聆聽發音";
+                    playBtnIcon.className = "fa-solid fa-volume-high";
+                }
+                return;
+            }
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = speechRate;
+            utterance.lang = speechLang;
+
+            const voices = window.speechSynthesis.getVoices();
+            const matchingVoice = voices.find(v => v.lang.startsWith(speechLang));
+            if (matchingVoice) utterance.voice = matchingVoice;
+
+            utterance.onstart = () => {
+                if (isMainQuote && playBtnLabel && playBtnIcon) {
+                    playBtnLabel.innerText = "播放中...";
+                    playBtnIcon.className = "fa-solid fa-volume-high animate-bounce";
+                }
+            };
+
+            utterance.onend = () => {
+                if (isMainQuote && playBtnLabel && playBtnIcon) {
+                    playBtnLabel.innerText = "聆聽發音";
+                    playBtnIcon.className = "fa-solid fa-volume-high";
+                }
+            };
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function toggleApiKeyModal() {
+            const modal = document.getElementById('api-key-modal');
+            const isHidden = modal.classList.contains('pointer-events-none');
+
+            if (isHidden) {
+                document.getElementById('input-api-key').value = geminiApiKey;
+                document.getElementById('select-gemini-voice').value = geminiVoice;
+                modal.classList.remove('pointer-events-none', 'opacity-0');
+                modal.firstElementChild.classList.remove('scale-95');
+            } else {
+                modal.classList.add('pointer-events-none', 'opacity-0');
+                modal.firstElementChild.classList.add('scale-95');
+            }
+        }
+
+        function toggleApiKeyVisibility() {
+            const input = document.getElementById('input-api-key');
+            const icon = document.getElementById('icon-eye');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fa-regular fa-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'fa-regular fa-eye';
+            }
+        }
+
+        // 驗證 Gemini API Key 是否有效
+        async function verifyGeminiApiKey(key) {
+            if (!key) return false;
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${key}`;
+            const payload = {
+                contents: [{ parts: [{ text: "Hello" }] }],
+                generationConfig: {
+                    responseModalities: ["AUDIO"],
+                    speechConfig: {
+                        voiceConfig: { prebuiltVoiceConfig: { voiceName: "Kore" } }
+                    }
+                }
+            };
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) return false;
+                const result = await response.json();
+                return !!(result?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data);
+            } catch (e) {
+                return false;
+            }
+        }
+
+        async function saveApiKey() {
+            const keyInput = document.getElementById('input-api-key').value.trim();
+            const voiceSelect = document.getElementById('select-gemini-voice').value;
+            const saveBtnLabel = document.getElementById('label-save-api-key');
+
+            if (!keyInput) {
+                clearApiKey();
+                return;
+            }
+
+            // 啟用驗證中 UI
+            if (saveBtnLabel) saveBtnLabel.innerHTML = `<i class="fa-solid fa-spinner animate-spin mr-1"></i> 驗證 Key 中...`;
+
+            const isValid = await verifyGeminiApiKey(keyInput);
+
+            if (saveBtnLabel) saveBtnLabel.innerText = "儲存並啟用 Gemini 發音";
+
+            if (isValid) {
+                geminiApiKey = keyInput;
+                geminiVoice = voiceSelect;
+
+                localStorage.setItem('gemini_api_key', geminiApiKey);
+                localStorage.setItem('gemini_voice', geminiVoice);
+
+                updateGeminiStatusUI();
+                toggleApiKeyModal();
+                showToast('Gemini API Key 驗證成功！已啟用高音質發音');
+            } else {
+                showToast('API Key 無效或連線失敗，請檢查後重新輸入！', 'error');
+            }
+        }
+
+        function clearApiKey() {
+            geminiApiKey = '';
+            localStorage.removeItem('gemini_api_key');
+            document.getElementById('input-api-key').value = '';
+            updateGeminiStatusUI();
+            toggleApiKeyModal();
+            showToast('已清除 Gemini API Key，還原預設發音');
+        }
+
+        function updateGeminiStatusUI() {
+            const statusText = document.getElementById('gemini-status-text');
+            const btn = document.getElementById('btn-api-key');
+            if (geminiApiKey) {
+                statusText.innerText = `Gemini 發音: 已啟用 (${geminiVoice})`;
+                btn.className = "flex items-center space-x-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-500/15 to-teal-500/15 border border-emerald-300 dark:border-emerald-800 rounded-full text-emerald-600 dark:text-emerald-400 text-xs font-semibold shadow-sm transition-all";
+            } else {
+                statusText.innerText = "Gemini 發音: 未綁定";
+                btn.className = "flex items-center space-x-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-500/10 to-indigo-500/10 hover:from-purple-500/20 hover:to-indigo-500/20 border border-indigo-200 dark:border-indigo-800 rounded-full text-indigo-600 dark:text-indigo-400 text-xs font-semibold transition-all";
+            }
+        }
+
+        async function testGeminiVoice() {
+            const tempKey = document.getElementById('input-api-key').value.trim();
+            if (!tempKey) {
+                showToast('請先輸入 API Key 再測試喔！', 'error');
+                return;
+            }
+            const oldKey = geminiApiKey;
+            const oldVoice = geminiVoice;
+            geminiApiKey = tempKey;
+            geminiVoice = document.getElementById('select-gemini-voice').value;
+
+            showToast('正在測試 Gemini 聲線發音...');
+            await speakText("Hello! I am Gemini, your daily English learning assistant.");
+
+            // Restore state if not saved yet
+            geminiApiKey = oldKey;
+            geminiVoice = oldVoice;
+        }
+
+        function renderVocabulary(vocabList) {
+            const container = document.getElementById('vocab-container');
+            container.innerHTML = vocabList.map((v, i) => `
+                <div class="bg-white dark:bg-slate-800/80 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 shadow-sm flex flex-col justify-between hover:border-indigo-300 dark:hover:border-indigo-700 transition">
+                    <div class="space-y-2">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <h3 class="font-bold text-base text-slate-900 dark:text-white flex items-center space-x-1.5">
+                                    <span>${v.word}</span>
+                                </h3>
+                                <div class="text-xs text-indigo-600 dark:text-indigo-400 font-mono mt-0.5">
+                                    ${v.ipa} <span class="text-slate-400 font-sans italic ml-1">${v.pos}</span>
+                                </div>
+                            </div>
+                            <button onclick="speakText('${v.word.replace(/'/g, "\\'")}')" class="p-2 rounded-xl text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950 transition" title="朗讀單字">
+                                <i class="fa-solid fa-volume-high"></i>
+                            </button>
+                        </div>
+                        <p class="text-sm text-slate-700 dark:text-slate-200 font-medium">${v.meaning}</p>
+                    </div>
+                    <div class="mt-3 pt-2 border-t border-slate-100 dark:border-slate-700/50 text-xs text-slate-500 dark:text-slate-400">
+                        <span class="font-semibold text-slate-400">例句:</span> ${v.example}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderGrammar(grammarObj) {
+            document.getElementById('grammar-title').innerText = grammarObj.title;
+            document.getElementById('grammar-desc').innerHTML = grammarObj.desc;
+
+            const breakdown = document.getElementById('grammar-breakdown');
+            breakdown.innerHTML = grammarObj.chips.map(chip => `
+                <div class="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-700/60 rounded-xl">
+                    <span class="font-bold text-slate-400 dark:text-slate-500">${chip.label}:</span>
+                    <span class="font-medium text-slate-800 dark:text-slate-200">${chip.text}</span>
+                </div>
+            `).join('');
+        }
+
+        function renderDialogue(dialogueList) {
+            const container = document.getElementById('dialogue-container');
+            container.innerHTML = dialogueList.map((d, i) => `
+                <div class="flex items-start space-x-3 group">
+                    <div class="w-9 h-9 rounded-2xl ${d.speaker === 'A' ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-300' : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-300'} flex items-center justify-center font-bold text-sm shrink-0">
+                        ${d.speaker}
+                    </div>
+                    <div class="flex-1 bg-slate-50 dark:bg-slate-900/60 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-800 space-y-1">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-slate-400">${d.name}</span>
+                            <button onclick="speakText('${d.text.replace(/'/g, "\\'")}')" class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-indigo-600 text-xs transition">
+                                <i class="fa-solid fa-volume-high"></i>
+                            </button>
+                        </div>
+                        <p class="text-sm font-semibold text-slate-800 dark:text-slate-100 leading-snug">${d.text}</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">${d.zh}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderQuiz(quizObj) {
+            document.getElementById('quiz-question').innerText = quizObj.question;
+            const optionsContainer = document.getElementById('quiz-options');
+            const feedback = document.getElementById('quiz-feedback');
+            const badge = document.getElementById('quiz-status-badge');
+
+            feedback.className = 'hidden p-4 rounded-xl text-sm font-medium transition-all';
+            
+            const isCompleted = quizAnswers[currentQuoteIndex] !== undefined;
+            if (isCompleted) {
+                badge.className = 'text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400';
+                badge.innerText = '已完成';
+            } else {
+                badge.className = 'text-xs font-medium px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300';
+                badge.innerText = '未完成';
+            }
+
+            optionsContainer.innerHTML = quizObj.options.map((opt, i) => `
+                <button onclick="checkQuizAnswer(${i})" class="w-full text-left p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-indigo-500 dark:hover:border-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-slate-700/80 transition flex items-center justify-between group">
+                    <span class="font-medium text-sm text-slate-800 dark:text-slate-200">${i + 1}. ${opt}</span>
+                    <i class="fa-regular fa-circle text-slate-300 dark:text-slate-600 group-hover:text-indigo-500"></i>
+                </button>
+            `).join('');
+        }
+
+        function speakText(text) {
+            if (!('speechSynthesis' in window)) {
+                showToast('您的瀏覽器不支援語音播放', 'error');
+                return;
+            }
+
+            window.speechSynthesis.cancel(); // Stop ongoing speech
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = speechRate;
+            utterance.lang = speechLang;
+
+            // Try to set voice matching accent
+            const voices = window.speechSynthesis.getVoices();
+            const matchingVoice = voices.find(v => v.lang.startsWith(speechLang));
+            if (matchingVoice) utterance.voice = matchingVoice;
+
+            const playBtnLabel = document.getElementById('label-play-quote');
+            const playBtnIcon = document.getElementById('icon-play-quote');
+
+            utterance.onstart = () => {
+                if (text.includes(QUOTE_DATABASE[currentQuoteIndex].english)) {
+                    if (playBtnLabel) playBtnLabel.innerText = "播放中...";
+                    if (playBtnIcon) playBtnIcon.className = "fa-solid fa-volume-high animate-bounce";
+                }
+            };
+
+            utterance.onend = () => {
+                if (playBtnLabel) playBtnLabel.innerText = "聆聽發音";
+                if (playBtnIcon) playBtnIcon.className = "fa-solid fa-volume-high";
+            };
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function playCurrentQuoteAudio() {
+            const quote = QUOTE_DATABASE[currentQuoteIndex].english;
+            speakText(quote);
+        }
+
+        function playFullDialogue() {
+            const dialogue = QUOTE_DATABASE[currentQuoteIndex].dialogue;
+            let index = 0;
+
+            function playNext() {
+                if (index < dialogue.length) {
+                    const line = dialogue[index];
+                    const utterance = new SpeechSynthesisUtterance(line.text);
+                    utterance.rate = speechRate;
+                    utterance.lang = speechLang;
+                    utterance.onend = () => {
+                        index++;
+                        setTimeout(playNext, 400);
+                    };
+                    window.speechSynthesis.speak(utterance);
+                }
+            }
+
+            window.speechSynthesis.cancel();
+            playNext();
+        }
+
+        function setSpeed(rate) {
+            speechRate = rate;
+            document.querySelectorAll('.speed-btn').forEach(btn => {
+                btn.className = 'speed-btn px-2 py-0.5 rounded font-medium transition-colors text-slate-600 dark:text-slate-300';
+            });
+            const activeBtn = rate === 0.8 ? document.getElementById('speed-08') : document.getElementById('speed-10');
+            activeBtn.className = 'speed-btn px-2 py-0.5 rounded font-medium transition-colors bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400';
+        }
+
+        function setVoiceAccent(lang) {
+            speechLang = lang;
+            document.querySelectorAll('.accent-btn').forEach(btn => {
+                btn.className = 'accent-btn px-2.5 py-1 rounded-lg font-medium transition text-slate-500 dark:text-slate-400';
+            });
+            const activeBtn = lang === 'en-US' ? document.getElementById('accent-us') : document.getElementById('accent-uk');
+            activeBtn.className = 'accent-btn px-2.5 py-1 rounded-lg font-medium transition bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm';
+            showToast(`已切換口音為 ${lang === 'en-US' ? '美音 🇺🇸' : '英音 🇬🇧'}`);
+        }
+
+        function prevQuote() {
+            if (currentQuoteIndex > 0) {
+                loadQuote(currentQuoteIndex - 1);
+            } else {
+                loadQuote(QUOTE_DATABASE.length - 1);
+            }
+        }
+
+        function nextQuote() {
+            if (currentQuoteIndex < QUOTE_DATABASE.length - 1) {
+                loadQuote(currentQuoteIndex + 1);
+            } else {
+                loadQuote(0);
+            }
+        }
+
+        function randomQuote() {
+            let nextIndex = Math.floor(Math.random() * QUOTE_DATABASE.length);
+            if (nextIndex === currentQuoteIndex && QUOTE_DATABASE.length > 1) {
+                nextIndex = (currentQuoteIndex + 1) % QUOTE_DATABASE.length;
+            }
+            loadQuote(nextIndex);
+            showToast('已切換至隨機金句');
+        }
+
+        function toggleCurrentBookmark() {
+            const item = QUOTE_DATABASE[currentQuoteIndex];
+            const existingIdx = bookmarks.findIndex(b => b.id === item.id);
+
+            if (existingIdx >= 0) {
+                bookmarks.splice(existingIdx, 1);
+                showToast('已從收藏移除');
+            } else {
+                bookmarks.push(item);
+                showToast('已成功加入收藏！');
+            }
+
+            localStorage.setItem('daily_english_bookmarks', JSON.stringify(bookmarks));
+            updateBookmarkButtonState();
+            updateBookmarkBadge();
+        }
+
+        function updateBookmarkButtonState() {
+            const item = QUOTE_DATABASE[currentQuoteIndex];
+            const isBookmarked = bookmarks.some(b => b.id === item.id);
+            const icon = document.getElementById('icon-bookmark-current');
+
+            if (isBookmarked) {
+                icon.className = "fa-solid fa-bookmark text-indigo-600 dark:text-indigo-400";
+            } else {
+                icon.className = "fa-regular fa-bookmark";
+            }
+        }
+
+        function updateBookmarkBadge() {
+            const badge = document.getElementById('bookmark-badge');
+            if (bookmarks.length > 0) {
+                badge.innerText = bookmarks.length;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function toggleBookmarksModal() {
+            const modal = document.getElementById('bookmarks-modal');
+            const isHidden = modal.classList.contains('pointer-events-none');
+
+            if (isHidden) {
+                renderBookmarksList();
+                modal.classList.remove('pointer-events-none', 'opacity-0');
+                modal.firstElementChild.classList.remove('scale-95');
+            } else {
+                modal.classList.add('pointer-events-none', 'opacity-0');
+                modal.firstElementChild.classList.add('scale-95');
+            }
+        }
+
+        function renderBookmarksList() {
+            const container = document.getElementById('bookmarks-list');
+            if (bookmarks.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-slate-400">
+                        <i class="fa-regular fa-folder-open text-3xl mb-2 block"></i>
+                        <p class="text-sm">尚無收藏的金句</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = bookmarks.map(item => `
+                <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-700/60 flex items-center justify-between gap-3">
+                    <div class="space-y-1 cursor-pointer flex-1" onclick="jumpToQuoteById(${item.id})">
+                        <p class="font-bold text-sm text-slate-800 dark:text-slate-100 line-clamp-1">"${item.english}"</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">${item.chinese}</p>
+                    </div>
+                    <button onclick="removeBookmark(${item.id})" class="text-slate-400 hover:text-rose-500 p-2">
+                        <i class="fa-solid fa-trash-can text-sm"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function jumpToQuoteById(id) {
+            const idx = QUOTE_DATABASE.findIndex(q => q.id === id);
+            if (idx >= 0) {
+                loadQuote(idx);
+                toggleBookmarksModal();
+            }
+        }
+
+        function removeBookmark(id) {
+            bookmarks = bookmarks.filter(b => b.id !== id);
+            localStorage.setItem('daily_english_bookmarks', JSON.stringify(bookmarks));
+            renderBookmarksList();
+            updateBookmarkButtonState();
+            updateBookmarkBadge();
+            showToast('已刪除該筆收藏');
+        }
+
+        function copyQuoteToClipboard() {
+            const item = QUOTE_DATABASE[currentQuoteIndex];
+            const textToCopy = `【每日一句英語】\n"${item.english}"\n（${item.chinese}）`;
+            
+            // Clipboard fallback
+            const textarea = document.createElement('textarea');
+            textarea.value = textToCopy;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+
+            showToast('已複製金句到剪貼簿！');
+        }
+
+        function checkQuizAnswer(selectedIndex) {
+            const currentQuiz = QUOTE_DATABASE[currentQuoteIndex].quiz;
+            const feedback = document.getElementById('quiz-feedback');
+            feedback.classList.remove('hidden');
+
+            if (selectedIndex === currentQuiz.correctIndex) {
+                feedback.className = 'p-4 rounded-xl text-sm font-medium bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200';
+                feedback.innerHTML = `
+                    <div class="flex items-center space-x-2 font-bold mb-1">
+                        <i class="fa-solid fa-circle-check text-emerald-500"></i>
+                        <span>回答正確！太棒了！</span>
+                    </div>
+                    <p class="text-xs text-emerald-700 dark:text-emerald-300">${currentQuiz.explanation}</p>
+                `;
+
+                if (!quizAnswers[currentQuoteIndex]) {
+                    quizAnswers[currentQuoteIndex] = true;
+                    streakDays += 1;
+                    localStorage.setItem('daily_english_streak', streakDays);
+                    updateStreakUI();
+                }
+
+                // Trigger confetti animation
+                try {
+                    confetti({
+                        particleCount: 50,
+                        spread: 60,
+                        origin: { y: 0.8 }
+                    });
+                } catch(e) {}
+
+            } else {
+                feedback.className = 'p-4 rounded-xl text-sm font-medium bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-200';
+                feedback.innerHTML = `
+                    <div class="flex items-center space-x-2 font-bold mb-1">
+                        <i class="fa-solid fa-circle-xmark text-rose-500"></i>
+                        <span>再試一次看看喔！</span>
+                    </div>
+                    <p class="text-xs text-rose-700 dark:text-rose-300">提示：請對照金句中的核心關鍵單字喔。</p>
+                `;
+            }
+
+            renderQuiz(currentQuiz);
+        }
+
+        function updateStreakUI() {
+            document.getElementById('streak-count').innerText = streakDays;
+        }
+
+        function toggleDarkMode() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            const icon = document.getElementById('theme-icon');
+            if (isDark) {
+                icon.className = 'fa-solid fa-sun text-lg';
+                showToast('已切換為深色模式');
+            } else {
+                icon.className = 'fa-solid fa-moon text-lg';
+                showToast('已切換為淺色模式');
+            }
+        }
+
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            const msgEl = document.getElementById('toast-message');
+            const icon = document.getElementById('toast-icon');
+
+            msgEl.innerText = msg;
+            if (type === 'error') {
+                icon.className = 'fa-solid fa-circle-exclamation text-rose-400';
+            } else {
+                icon.className = 'fa-solid fa-circle-check text-emerald-400 dark:text-emerald-500';
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2500);
+        }
+    </script>
+</body>
+</html>
